@@ -67,6 +67,7 @@ namespace Game {
 	dConfig* config;
 	dLocale* locale;
 	std::mt19937 randomEngine;
+	
 
 	RakPeerInterface* chatServer;
 	SystemAddress chatSysAddr;

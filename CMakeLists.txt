@@ -42,63 +42,61 @@ endif()
 
 # Fetch External (Non-Submodule) Libraries
 if(WIN32)
-include(FetchContent)
+    include(FetchContent)
 
-FetchContent_Declare(
-    mysql
-    URL https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++-8.0.27-winx64.zip
-    URL_HASH MD5=e3c53f6e4d0a72fde2713f7597bf9468
-)
-
-FetchContent_Declare(
-    zlib
-    URL http://github.com/madler/zlib/archive/refs/tags/v1.2.11.zip
-    URL_HASH MD5=9d6a627693163bbbf3f26403a3a0b0b1
-)
-
-FetchContent_MakeAvailable(zlib)
-FetchContent_MakeAvailable(mysql)
-
-set(ZLIB_INCLUDE_DIRS ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
-set_target_properties(zlib PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${ZLIB_INCLUDE_DIRS}") # Why?
-add_library(ZLIB::ZLIB ALIAS zlib) # You're welcome
-
-endif(WIN32)
-if(UNIX)
-if(APPLE)
-else()
-include(FetchContent)
-
-FetchContent_Declare(
-    mysql
-    URL https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++-8.0.27-linux-glibc2.12-x86-64bit.tar.gz
-    URL_HASH MD5=12f086b76c11022cc7139b41a36cdf9e
-)
-
-FetchContent_MakeAvailable(mysql)
-
-if (__include_backtrace__ AND __compile_backtrace__)
     FetchContent_Declare(
-        backtrace
-        GIT_REPOSITORY https://github.com/ianlancetaylor/libbacktrace.git
+        mysql
+        URL https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++-8.0.27-winx64.zip
+        URL_HASH MD5=e3c53f6e4d0a72fde2713f7597bf9468
     )
 
-    FetchContent_MakeAvailable(backtrace)
-
-    if (NOT EXISTS ${backtrace_SOURCE_DIR}/.libs)
-    set(backtrace_make_cmd "${backtrace_SOURCE_DIR}/configure --prefix=\"/usr\" --enable-shared --with-system-libunwind")
-
-    execute_process(
-        COMMAND bash -c "cd ${backtrace_SOURCE_DIR} && ${backtrace_make_cmd} && make && cd ${CMAKE_SOURCE_DIR}"
+    FetchContent_Declare(
+        zlib
+        URL http://github.com/madler/zlib/archive/refs/tags/v1.2.11.zip
+        URL_HASH MD5=9d6a627693163bbbf3f26403a3a0b0b1
     )
-    endif()
 
-    link_directories(${backtrace_SOURCE_DIR}/.libs/)
-    include_directories(${backtrace_SOURCE_DIR})
-endif(__include_backtrace__)
+    FetchContent_MakeAvailable(zlib)
+    FetchContent_MakeAvailable(mysql)
 
+    set(ZLIB_INCLUDE_DIRS ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
+    set_target_properties(zlib PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${ZLIB_INCLUDE_DIRS}") # Why?
+    add_library(ZLIB::ZLIB ALIAS zlib) # You're welcome
 endif()
-endif(UNIX)
+
+if(UNIX)
+    if(not APPLE)
+        include(FetchContent)
+
+        FetchContent_Declare(
+            mysql
+            URL https://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++-8.0.27-linux-glibc2.12-x86-64bit.tar.gz
+            URL_HASH MD5=12f086b76c11022cc7139b41a36cdf9e
+        )
+
+        FetchContent_MakeAvailable(mysql)
+
+        if (__include_backtrace__ AND __compile_backtrace__)
+            FetchContent_Declare(
+                backtrace
+                GIT_REPOSITORY https://github.com/ianlancetaylor/libbacktrace.git
+            )
+
+            FetchContent_MakeAvailable(backtrace)
+
+            if (NOT EXISTS ${backtrace_SOURCE_DIR}/.libs)
+            set(backtrace_make_cmd "${backtrace_SOURCE_DIR}/configure --prefix=\"/usr\" --enable-shared --with-system-libunwind")
+
+            execute_process(
+                COMMAND bash -c "cd ${backtrace_SOURCE_DIR} && ${backtrace_make_cmd} && make && cd ${CMAKE_SOURCE_DIR}"
+            )
+            endif()
+
+            link_directories(${backtrace_SOURCE_DIR}/.libs/)
+            include_directories(${backtrace_SOURCE_DIR})
+        endif()
+    endif()
+endif()
 
 # Set the version
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
@@ -178,6 +176,7 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/tinyxml2/)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/recastnavigation/Recast/Include)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty/recastnavigation/Detour/Include)
 include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/sol/include)
 
 # Bcrypt
 if (NOT WIN32)
@@ -211,8 +210,8 @@ include_directories(${PROJECT_SOURCE_DIR}/dScripts/)
 # Default to linking to libmysql
 set(MYSQL_LIB mysql)
 if(WIN32)
-set(MYSQL_LIB mysqlcppconn)
-endif(WIN32)
+    set(MYSQL_LIB mysqlcppconn)
+endif()
 
 # Lib folders:
 link_directories(${PROJECT_BINARY_DIR})
@@ -224,10 +223,11 @@ if(UNIX)
 
         # Link to libmysqlcppconn on Linux
         set(MYSQL_LIB mysqlcppconn)
-    endif(APPLE)
-endif(UNIX)
+    endif()
+endif()
+
 if(WIN32)
-link_directories(${mysql_SOURCE_DIR}/lib64/vs14)
+    link_directories(${mysql_SOURCE_DIR}/lib64/vs14)
 endif(WIN32)
 
 # Source Code
@@ -303,6 +303,18 @@ ${PROJECT_SOURCE_DIR}/thirdparty/libbcrypt/*.c
 ${PROJECT_SOURCE_DIR}/thirdparty/libbcrypt/src/*.c
 )
 
+# Source code for sol2
+file(
+GLOB SOURCES_SOL2
+LIST_DIRECTORIES false
+RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+${PROJECT_SOURCE_DIR}/thirdparty/sol/include/sol/*.hpp
+${PROJECT_SOURCE_DIR}/thirdparty/sol/include/sol/compatibility/*.hpp
+${PROJECT_SOURCE_DIR}/thirdparty/sol/include/sol/compatibility/*.h
+${PROJECT_SOURCE_DIR}/thirdparty/sol/include/sol/detail/*.hpp
+${PROJECT_SOURCE_DIR}/thirdparty/sol/include/sol/stack/detail*.hpp
+)
+
 # Source Code for dCommon
 file(
 GLOB SOURCES_DCOMMON
@@ -374,6 +386,8 @@ ${PROJECT_SOURCE_DIR}/dPhysics/*.cpp
 #add_library(zlib ${SOURCES_ZLIB})
 add_library(raknet ${SOURCES_RAKNET})
 add_library(tinyxml2 ${SOURCES_TINYXML2})
+add_library(sol2 ${SOURCES_SOL2})
+set_target_properties(sol2 PROPERTIES LINKER_LANGUAGE CXX) # set sol to a cxx lib
 add_library(detour ${SOURCES_DETOUR})
 add_library(recast ${SOURCES_RECAST})
 add_library(libbcrypt ${SOURCES_LIBBCRYPT})
@@ -408,21 +422,23 @@ target_link_libraries(WorldServer detour)
 target_link_libraries(WorldServer recast)
 target_link_libraries(WorldServer raknet)
 target_link_libraries(WorldServer ${MYSQL_LIB})
-if(UNIX)
-target_link_libraries(WorldServer pthread)
-target_link_libraries(WorldServer dl)
 
-if(NOT APPLE AND __include_backtrace__)
-target_link_libraries(WorldServer backtrace)
-target_link_libraries(MasterServer backtrace)
-target_link_libraries(AuthServer backtrace)
-target_link_libraries(ChatServer backtrace)
+if(UNIX)
+    target_link_libraries(WorldServer pthread)
+    target_link_libraries(WorldServer dl)
+
+    if(NOT APPLE AND __include_backtrace__)
+        target_link_libraries(WorldServer backtrace)
+        target_link_libraries(MasterServer backtrace)
+        target_link_libraries(AuthServer backtrace)
+        target_link_libraries(ChatServer backtrace)
+    endif()
 endif()
 
-endif(UNIX)
 if(WIN32)
-target_link_libraries(WorldServer ws2_32)
-endif(WIN32)
+    target_link_libraries(WorldServer ws2_32)
+endif()
+
 target_link_libraries(WorldServer tinyxml2)
 
 # Target libraries for Auth:
@@ -431,13 +447,15 @@ target_link_libraries(AuthServer dDatabase)
 target_link_libraries(AuthServer dNet)
 target_link_libraries(AuthServer raknet)
 target_link_libraries(AuthServer ${MYSQL_LIB})
+
 if(UNIX)
-target_link_libraries(AuthServer pthread)
-target_link_libraries(AuthServer dl)
-endif(UNIX)
+    target_link_libraries(AuthServer pthread)
+    target_link_libraries(AuthServer dl)
+endif()
+
 if(WIN32)
-target_link_libraries(AuthServer ws2_32)
-endif(WIN32)
+    target_link_libraries(AuthServer ws2_32)
+endif()
 
 # Target libraries for Master:
 target_link_libraries(MasterServer dCommon)
@@ -446,12 +464,13 @@ target_link_libraries(MasterServer dNet)
 target_link_libraries(MasterServer raknet)
 target_link_libraries(MasterServer ${MYSQL_LIB})
 if(UNIX)
-target_link_libraries(MasterServer pthread)
-target_link_libraries(MasterServer dl)
-endif(UNIX)
+    target_link_libraries(MasterServer pthread)
+    target_link_libraries(MasterServer dl)
+endif()
+
 if(WIN32)
-target_link_libraries(MasterServer ws2_32)
-endif(WIN32)
+    target_link_libraries(MasterServer ws2_32)
+endif()
 
 # Target libraries for Chat:
 target_link_libraries(ChatServer dCommon)
@@ -460,13 +479,15 @@ target_link_libraries(ChatServer dDatabase)
 target_link_libraries(ChatServer dNet)
 target_link_libraries(ChatServer raknet)
 target_link_libraries(ChatServer ${MYSQL_LIB})
+
 if(UNIX)
-target_link_libraries(ChatServer pthread)
-target_link_libraries(ChatServer dl)
-endif(UNIX)
+    target_link_libraries(ChatServer pthread)
+    target_link_libraries(ChatServer dl)
+endif()
+
 if(WIN32)
-target_link_libraries(ChatServer ws2_32)
-endif(WIN32)
+    target_link_libraries(ChatServer ws2_32)
+endif()
 
 # Compiler flags:
 # Disabled deprecated warnings as the MySQL includes have deprecated code in them. 
@@ -486,4 +507,4 @@ if(UNIX)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
     endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O2 -fPIC")
-endif(UNIX)
+endif()
