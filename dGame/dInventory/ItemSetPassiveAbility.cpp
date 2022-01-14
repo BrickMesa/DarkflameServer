@@ -184,7 +184,7 @@ std::vector<ItemSetPassiveAbility> ItemSetPassiveAbility::FindAbilities(uint32_t
 
         break;
     }
-    // Paradox
+    // Paradox and Bat Lord
     case ItemSetPassiveAbilityID::BatLord:
     case ItemSetPassiveAbilityID::SpaceMarauderRank1:
     case ItemSetPassiveAbilityID::SpaceMarauderRank2:
