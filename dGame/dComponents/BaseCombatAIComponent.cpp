@@ -192,7 +192,7 @@ void BaseCombatAIComponent::Update(const float deltaTime) {
 		return;
 	}
 
-	if (m_Stunned || m_SkillTime > 0) {
+	if (m_Stunned) {
 		m_MovementAI->Stop();
 
 		return;
